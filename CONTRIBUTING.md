@@ -82,6 +82,9 @@ in [docs/architecture](docs/architecture/).
   the version in `herdr-plugin.toml`. Do not edit any of them by hand.
 - Keep a PR to one thing. A refactor, a feature and a formatting sweep are three
   pull requests.
+- Fill in every section of the PR template: a Summary that shows the change
+  as a diagram or sketch, Evidence from before and after, and the Merge Danger.
+  [.claude/skills/pr/SKILL.md](.claude/skills/pr/SKILL.md) says what each wants.
 
 ## Code of conduct
 

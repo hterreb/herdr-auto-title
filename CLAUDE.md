@@ -10,6 +10,8 @@ to Claude Code is below.
 - `validate-agent-work` — run it after any change before handing work back, and
   again before opening a pull request. It runs `make check` and reads the whole
   branch against the mandatory rules in AGENTS.md, which no linter checks.
+- `pr` — write every pull request body with it, before `gh pr create` or
+  `gh pr edit --body`. It fills the template AGENTS.md makes mandatory.
 - Delegate a broad multi-file search to the **Explore** agent and keep the
   conclusion, not the file dumps.
 

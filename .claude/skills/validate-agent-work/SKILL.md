@@ -48,11 +48,16 @@ before handing work back.
    make ps
    ```
 
-6. **Fix and re-run** — fix what a step found, then run that step again to
+6. **Before opening a pull request**, write its body with the `pr` skill and
+   check it against
+   [.github/pull_request_template.md](../../../.github/pull_request_template.md):
+   every section filled, no HTML comment left, no attribution line.
+
+7. **Fix and re-run** — fix what a step found, then run that step again to
    confirm it. If a failure is not yours to fix, say so rather than working
    around it.
 
-7. **Report** — always say what happened:
+8. **Report** — always say what happened:
 
    - Clean: a brief confirmation.
    - Found and fixed, one line each:

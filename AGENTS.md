@@ -71,6 +71,11 @@ with the types the commits use: `feat/optional-agent-name`,
   release-please.** Never edit one by hand.
 - Keep a pull request to one thing. A refactor, a feature and a formatting sweep
   are three pull requests.
+- **A pull request body follows
+  [.github/pull_request_template.md](.github/pull_request_template.md)**:
+  Summary, Evidence, Merge Danger and the checklist, every section filled and
+  no attribution line. How to fill each section is in
+  [.claude/skills/pr/SKILL.md](.claude/skills/pr/SKILL.md), for any agent.
 
 ## Type rule (mandatory)
 
