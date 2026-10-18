@@ -1,19 +1,35 @@
-## What this changes
+## Summary
 
 <!--
-One paragraph. The diff already says what; say why the change is the one
-worth making. If it settles something about Herdr's API, say what was
-probed.
+The smallest view that makes the point: pseudocode, a call tree, a file
+tree, a Mermaid diagram or a diff sketch, each beside one or two lines of
+why. If it settles something about Herdr's API, say what was probed.
 -->
 
 Closes #
 
-## How it was checked
+## Evidence
 
 <!--
-`make check` is the gate, but say what you looked at beyond it: a live
-session, a pane arranged to reproduce the bug, a probe under `scripts/`.
+A before and an after: a failing then passing test, a probe's output, a
+tab bar from a live session. `make check` is the gate; show what you looked
+at beyond it.
 -->
+
+- **Before:**
+  **After:**
+
+## Merge Danger
+
+<!--
+A two-way door is cheap to walk back; a one-way door is not — a label
+written onto the user's tabs, a token reported to a workspace, a setting
+whose meaning changes.
+-->
+
+**Door:** <!-- one-way or two-way -->
+
+**Blast Radius:** <!-- one word: what could break, and for whom -->
 
 ## Before merging
 
