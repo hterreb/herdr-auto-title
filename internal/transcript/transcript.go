@@ -25,12 +25,17 @@ const (
 	// HeadAndTail reads the first MaxScan bytes too, for a file that says where
 	// the session started only up front.
 	HeadAndTail
+	// Whole skips nothing and reads MaxScan a poll until it has caught up, for
+	// a file no line of which is repeated later: an index of many sessions.
+	Whole
 )
 
-// Follower reads one session file a poll at a time, from where the last read
-// stopped.
+// Follower reads one file a poll at a time, from where the last read of that
+// file stopped. Another path is read from its start, over what the last one
+// said: a session that went on in another file is still that session.
 type Follower struct {
 	CatchUp CatchUp
+	path    string
 	offset  int64
 }
 
@@ -38,6 +43,10 @@ type Follower struct {
 // the last call. A file shorter than what was read is a new file, so reset
 // runs first; a file that is gone reports false and is read from the start.
 func (f *Follower) Follow(path string, reset func(), absorb func(line string)) bool {
+	if path != f.path {
+		f.path, f.offset = path, 0
+	}
+
 	info, err := os.Stat(path)
 	if err != nil {
 		f.offset = 0
@@ -75,7 +84,7 @@ func (f *Follower) Follow(path string, reset func(), absorb func(line string)) b
 		f.offset = next
 	}
 
-	from, fromTail := f.offset, size-f.offset > MaxScan
+	from, fromTail := f.offset, f.CatchUp != Whole && size-f.offset > MaxScan
 	if fromTail {
 		from = size - MaxScan
 	}
