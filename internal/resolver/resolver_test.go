@@ -312,6 +312,168 @@ func TestAWorkspaceWithoutAName(t *testing.T) {
 	}
 }
 
+func directoryChain(maxLength int, hide bool) *Deterministic {
+	return Default(Options{
+		MaxLength:     DefaultMaxLength,
+		BranchMax:     DefaultBranchMaxLength,
+		DirectoryMax:  maxLength,
+		HideDirectory: hide,
+	})
+}
+
+func TestADirectoryIsCutToItsBound(t *testing.T) {
+	t.Parallel()
+
+	tab := tabWithPane(&state.PaneState{
+		Dir:           herdrtest.Dir("work", "SiteLine"),
+		TerminalTitle: "Fix OAuth redirect",
+	})
+
+	got := directoryChain(3, false).Resolve(tab)
+	if want := "Sit › Fix OAuth redirect"; got.Name != want {
+		t.Errorf("name = %q, want %q", got.Name, want)
+	}
+}
+
+func TestADirectoryIsMatchedBeforeItIsCut(t *testing.T) {
+	t.Parallel()
+
+	// Cut first, `Sit` would no longer match the workspace it repeats.
+	tab := tabWithPane(&state.PaneState{
+		Dir:           herdrtest.Dir("work", "SiteLine"),
+		TerminalTitle: "Fix OAuth redirect",
+	})
+	tab.WorkspaceName = "SiteLine"
+
+	got := directoryChain(3, false).Resolve(tab)
+	if want := "Fix OAuth redirect"; got.Name != want {
+		t.Errorf("name = %q, want %q", got.Name, want)
+	}
+}
+
+func TestACutDirectoryDropsTheBranchItNowRepeats(t *testing.T) {
+	t.Parallel()
+
+	// Each pair differs whole and matches only once the directory is cut, so
+	// the first repetition pass cannot catch it.
+	for _, test := range []struct {
+		dir, branch string
+		bound       int
+		want        string
+	}{
+		{"dashboard-app", "feature/dashboard-redesign", 9, "dashboard › Fix OAuth"},
+		{"web-v2", "web", 3, "web › Fix OAuth"},
+	} {
+		t.Run(test.dir, func(t *testing.T) {
+			t.Parallel()
+
+			got := directoryChain(test.bound, false).Resolve(tabWithPane(&state.PaneState{
+				Dir:           herdrtest.Dir("work", test.dir),
+				Git:           git.Checkout{Branch: test.branch, Default: "main"},
+				TerminalTitle: "Fix OAuth",
+			}))
+			if got.Name != test.want {
+				t.Errorf("name = %q, want %q", got.Name, test.want)
+			}
+		})
+	}
+}
+
+func TestACutDirectoryDropsTheWorkspaceItNowRepeats(t *testing.T) {
+	t.Parallel()
+
+	// `web-admin` differs from the workspace `web` whole, and cut to `web`
+	// would repeat the row above it.
+	tab := tabWithPane(&state.PaneState{
+		Dir:           herdrtest.Dir("work", "web-admin"),
+		TerminalTitle: "Fix OAuth redirect",
+	})
+	tab.WorkspaceName = "web"
+
+	got := directoryChain(3, false).Resolve(tab)
+	if want := "Fix OAuth redirect"; got.Name != want {
+		t.Errorf("name = %q, want %q", got.Name, want)
+	}
+}
+
+func TestABoundNarrowerThanACharacterKeepsIt(t *testing.T) {
+	t.Parallel()
+
+	// A wide first character under a bound of one would otherwise be cut to
+	// nothing, and a tab with nothing else would fall back to the generic title.
+	got := directoryChain(1, false).Resolve(tabWithPane(&state.PaneState{
+		Dir: herdrtest.Dir("work", "日本"),
+	}))
+	if want := "日"; got.Name != want {
+		t.Errorf("name = %q, want %q", got.Name, want)
+	}
+}
+
+func TestAPaneKeepsTheDirectoryItsTabHides(t *testing.T) {
+	t.Parallel()
+
+	// A pane's own directory is what tells it from its tab, so neither the
+	// bound nor hiding reaches pane labels.
+	tab := tabOf([]*state.PaneState{
+		{ID: "wE:p1", Dir: dashboard, Focused: true, TerminalTitle: "Fix OAuth"},
+		{ID: "wE:p2", Dir: api, Processes: []state.Process{{Name: "nvim"}}},
+	})
+
+	for _, chain := range []*Deterministic{directoryChain(1, false), directoryChain(0, true)} {
+		if got := chain.ResolvePanes(tab)[1].Name; !strings.HasPrefix(got, "api") {
+			t.Errorf("pane = %q, want its directory whole", got)
+		}
+	}
+}
+
+func TestAHiddenDirectoryLeavesTheRestOfTheTitle(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		pane *state.PaneState
+		want string
+	}{
+		{
+			name: "activity",
+			pane: &state.PaneState{Dir: api, TerminalTitle: "Fix OAuth redirect"},
+			want: "Fix OAuth redirect",
+		},
+		{
+			name: "branch",
+			pane: &state.PaneState{
+				Dir:           api,
+				Git:           git.Checkout{Branch: "release", Default: "main"},
+				TerminalTitle: "Fix OAuth redirect",
+			},
+			want: "release › Fix OAuth redirect",
+		},
+		// A tab reduced to nothing has lost more than the width it saved.
+		{name: "nothing else", pane: &state.PaneState{Dir: api}, want: "api"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := directoryChain(0, true).Resolve(tabWithPane(test.pane))
+			if got.Name != test.want {
+				t.Errorf("name = %q, want %q", got.Name, test.want)
+			}
+		})
+	}
+}
+
+func TestARemoteHostIsNoDirectory(t *testing.T) {
+	t.Parallel()
+
+	// The host is the one thing a row of remote shells is told apart by.
+	for _, chain := range []*Deterministic{directoryChain(1, false), directoryChain(0, true)} {
+		got := chain.Resolve(tabWithPane(moshPane("devbox")))
+		if !strings.Contains(got.Name, "devbox") {
+			t.Errorf("name = %q, want the host kept", got.Name)
+		}
+	}
+}
+
 func TestTheShippedChainIsAWellFormedLadder(t *testing.T) {
 	t.Parallel()
 

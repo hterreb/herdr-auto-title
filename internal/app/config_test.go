@@ -34,7 +34,7 @@ func isolate(t *testing.T) {
 	t.Setenv("AppData", filepath.Join(home, "AppData", "Roaming"))
 
 	names := []string{
-		EnvDebug, EnvPoll, EnvMaxLength, EnvBranchMax,
+		EnvDebug, EnvPoll, EnvMaxLength, EnvBranchMax, EnvDirectoryMax,
 		EnvPosition, EnvManual, EnvTranscript, EnvAgentName, EnvPanes,
 		EnvPreferAgent, EnvPaneID, EnvAgentHandle, EnvIcons, EnvWorkspaces, EnvWorkspaceMaxLength,
 		// Claude Code's own variable is cleared with ours: it now decides a
@@ -253,6 +253,52 @@ func TestABranchWidthOfZeroIsAValue(t *testing.T) {
 
 	if cfg.BranchMax != 0 {
 		t.Errorf("branch max = %d, want 0", cfg.BranchMax)
+	}
+}
+
+//nolint:paralleltest // configuration is read from the environment
+func TestADirectoryIsUnboundedByDefault(t *testing.T) {
+	isolate(t)
+
+	cfg, _ := LoadConfig()
+	if cfg.DirectoryMax != 0 || cfg.HideDirectory {
+		t.Errorf(
+			"directory max = %d, hidden = %v, want neither",
+			cfg.DirectoryMax,
+			cfg.HideDirectory,
+		)
+	}
+}
+
+func TestANegativeDirectoryWidthIsRejected(t *testing.T) {
+	isolate(t)
+	t.Setenv(EnvDirectoryMax, "-1")
+
+	cfg, warnings := LoadConfig()
+	if cfg.DirectoryMax != 0 || cfg.HideDirectory {
+		t.Errorf(
+			"directory max = %d, hidden = %v, want neither",
+			cfg.DirectoryMax,
+			cfg.HideDirectory,
+		)
+	}
+
+	if len(warnings) != 1 {
+		t.Errorf("warnings = %v, want one", warnings)
+	}
+}
+
+func TestADirectoryWidthOfZeroHidesIt(t *testing.T) {
+	isolate(t)
+	t.Setenv(EnvDirectoryMax, "0")
+
+	cfg, warnings := LoadConfig()
+	if len(warnings) != 0 {
+		t.Errorf("warnings = %v, want none", warnings)
+	}
+
+	if !cfg.HideDirectory {
+		t.Error("the directory is shown despite a width of zero")
 	}
 }
 

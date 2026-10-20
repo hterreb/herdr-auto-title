@@ -624,6 +624,34 @@ alone, so a tab in the workspace of the repository it is in reads
 stays. An agent's name counts too, but only while it is going to be shown —
 which is why it is dropped before this runs rather than after.
 
+## The directory can be bounded or hidden
+
+The directory leads a title, so in a narrow tab bar it can take most of it:
+with `MAX_LENGTH=15`, `SiteLine › ` is eleven columns of fifteen. The rule
+above drops it only under a workspace of the same name, and a workspace named
+after the work rather than the repository never matches.
+`HERDR_AUTO_TITLE_DIRECTORY_MAX` bounds it in columns, and `0` hides it.
+
+It is called the directory and not the repository because that is what it is:
+the basename of the pane's directory, `web` in `SiteLine/web`. A remote host
+sits in the same slot and is never bounded, because it is the one thing a row
+of remote shells is told apart by.
+
+The bound applies after every comparison. Each of them matches whole names, and
+cut down to `Sit`, a directory no longer matches the workspace or the branch it
+repeats. A cut can also make the directory equal a branch or a workspace that
+differed from it whole, `web` in `web-v2` on the branch `web`, or `web-admin`
+under the workspace `web`, so both passes run again on what is left. A bound
+narrower than the directory's first character, a wide one under a bound of one,
+keeps that character rather than cutting the directory to nothing. Hidden, the
+directory still names a tab that has nothing else to say, for the reason the
+workspace rule keeps it.
+
+Only a tab title is bounded. A workspace topic keeps its directory whole, and so
+does a pane label: under its tab, a pane's own directory is often the very thing
+that tells it apart, `api › nvim` beside a tab in `dashboard`, and the tab row
+above already drops a directory the two share.
+
 ## A pane is named for what tells it from its tab
 
 Pane naming is on unless it is turned off ([configuration](./configuration.md)).

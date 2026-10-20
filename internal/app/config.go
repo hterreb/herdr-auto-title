@@ -18,19 +18,20 @@ import (
 // Environment variables Auto Title reads. The configuration file holds the
 // same names; see docs/architecture/configuration.md.
 const (
-	EnvDebug       = "HERDR_AUTO_TITLE_DEBUG"
-	EnvPoll        = "HERDR_AUTO_TITLE_POLL_MS"
-	EnvMaxLength   = "HERDR_AUTO_TITLE_MAX_LENGTH"
-	EnvBranchMax   = "HERDR_AUTO_TITLE_BRANCH_MAX"
-	EnvPosition    = "HERDR_AUTO_TITLE_POSITION"
-	EnvManual      = "HERDR_AUTO_TITLE_MANUAL_FILE"
-	EnvTranscript  = "HERDR_AUTO_TITLE_TRANSCRIPT"
-	EnvAgentName   = "HERDR_AUTO_TITLE_AGENT_NAME"
-	EnvPanes       = "HERDR_AUTO_TITLE_PANES"
-	EnvPreferAgent = "HERDR_AUTO_TITLE_PREFER_AGENT"
-	EnvPaneID      = "HERDR_AUTO_TITLE_PANE_ID"
-	EnvAgentHandle = "HERDR_AUTO_TITLE_AGENT_HANDLE"
-	EnvIcons       = "HERDR_AUTO_TITLE_ICONS"
+	EnvDebug        = "HERDR_AUTO_TITLE_DEBUG"
+	EnvPoll         = "HERDR_AUTO_TITLE_POLL_MS"
+	EnvMaxLength    = "HERDR_AUTO_TITLE_MAX_LENGTH"
+	EnvBranchMax    = "HERDR_AUTO_TITLE_BRANCH_MAX"
+	EnvDirectoryMax = "HERDR_AUTO_TITLE_DIRECTORY_MAX"
+	EnvPosition     = "HERDR_AUTO_TITLE_POSITION"
+	EnvManual       = "HERDR_AUTO_TITLE_MANUAL_FILE"
+	EnvTranscript   = "HERDR_AUTO_TITLE_TRANSCRIPT"
+	EnvAgentName    = "HERDR_AUTO_TITLE_AGENT_NAME"
+	EnvPanes        = "HERDR_AUTO_TITLE_PANES"
+	EnvPreferAgent  = "HERDR_AUTO_TITLE_PREFER_AGENT"
+	EnvPaneID       = "HERDR_AUTO_TITLE_PANE_ID"
+	EnvAgentHandle  = "HERDR_AUTO_TITLE_AGENT_HANDLE"
+	EnvIcons        = "HERDR_AUTO_TITLE_ICONS"
 
 	EnvForeignProcesses = "HERDR_AUTO_TITLE_FOREIGN_PROCESSES"
 
@@ -61,6 +62,11 @@ type Config struct {
 	// BranchMax bounds what a git branch may add to a title. Zero leaves
 	// branches out of titles entirely.
 	BranchMax int
+	// DirectoryMax bounds what the pane's directory may add to a title, and
+	// zero leaves it unbounded. HideDirectory leaves it out instead, stated
+	// this way round so that a Config built without it keeps the directory.
+	DirectoryMax  int
+	HideDirectory bool
 	// ShowPosition puts each tab's position in front of its title, which is
 	// the key that switches to that tab.
 	ShowPosition bool
@@ -149,8 +155,9 @@ func LoadConfig() (Config, []string) {
 	cfg.Debug = fromEnv(&warnings, EnvDebug, cfg.Debug, boolean)
 	cfg.Poll = fromEnv(&warnings, EnvPoll, cfg.Poll, milliseconds)
 	cfg.MaxLength = fromEnv(&warnings, EnvMaxLength, cfg.MaxLength, count)
-	// Zero is meaningful here, and only here: it leaves branches out of titles.
+	// Zero is meaningful here: it leaves branches out of titles.
 	cfg.BranchMax = fromEnv(&warnings, EnvBranchMax, cfg.BranchMax, countOrNone)
+	cfg.DirectoryMax, cfg.HideDirectory = directoryFromEnv(&warnings)
 	cfg.ShowPosition = fromEnv(&warnings, EnvPosition, cfg.ShowPosition, boolean)
 	cfg.ReadSessions = fromEnv(&warnings, EnvTranscript, cfg.ReadSessions, boolean)
 	cfg.ShowAgentName = fromEnv(&warnings, EnvAgentName, cfg.ShowAgentName, boolean)
@@ -273,6 +280,25 @@ func fromEnv[T any](warnings *[]string, name string, fallback T, convert convert
 }
 
 type converter[T any] func(raw string) (T, error)
+
+// directoryFromEnv reads EnvDirectoryMax, whose zero hides the directory where
+// Config's zero leaves it unbounded, so it does not go through fromEnv.
+func directoryFromEnv(warnings *[]string) (maxLength int, hide bool) {
+	raw := os.Getenv(EnvDirectoryMax)
+	if raw == "" {
+		return 0, false
+	}
+
+	value, err := countOrNone(raw)
+	if err != nil {
+		*warnings = append(*warnings,
+			fmt.Sprintf("%s=%q %s, leaving it unbounded", EnvDirectoryMax, raw, err))
+
+		return 0, false
+	}
+
+	return value, value == 0
+}
 
 // The reasons a variable is rejected. Each reads as the middle of the warning
 // it lands in: `HERDR_AUTO_TITLE_POLL_MS="0" must be positive, using 500ms`.

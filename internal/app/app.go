@@ -106,6 +106,8 @@ func Resolvers(
 	chain := resolver.Default(resolver.Options{
 		MaxLength:     cfg.MaxLength,
 		BranchMax:     cfg.BranchMax,
+		DirectoryMax:  cfg.DirectoryMax,
+		HideDirectory: cfg.HideDirectory,
 		HideAgentName: !cfg.ShowAgentName,
 		ShowHandle:    cfg.ShowAgentHandle,
 		Home:          cfg.Home,

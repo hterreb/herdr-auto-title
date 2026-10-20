@@ -103,6 +103,18 @@ func truncate(s string, maxWidth int) string {
 	return strings.TrimSpace(cut)
 }
 
+// truncateToGrapheme is truncate that never empties s: a bound narrower than
+// its first grapheme, a wide character under a bound of one, keeps that grapheme.
+func truncateToGrapheme(s string, maxWidth int) string {
+	if cut := truncate(s, maxWidth); cut != "" {
+		return cut
+	}
+
+	first, _, _, _ := uniseg.FirstGraphemeClusterInString(s, -1)
+
+	return first
+}
+
 // withPrefix puts prefix in front of name within maxWidth columns, cutting the
 // name to fit. It returns name alone when the prefix would leave it no room:
 // a label reduced to its prefix has lost more than the prefix is worth.
