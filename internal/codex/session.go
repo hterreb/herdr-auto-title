@@ -23,6 +23,7 @@ type Reader struct {
 	mu       sync.Mutex
 	roots    []string
 	names    names
+	title    titleConfig
 	sessions map[string]*rollout
 	now      func() time.Time
 }
@@ -48,6 +49,7 @@ func NewReader(home string) *Reader {
 			path:     filepath.Join(home, "session_index.jsonl"),
 			follower: transcript.Follower{CatchUp: transcript.Whole},
 		},
+		title:    titleConfig{path: filepath.Join(home, "config.toml")},
 		sessions: make(map[string]*rollout),
 		now:      time.Now,
 	}
@@ -89,6 +91,19 @@ func (r *Reader) Topic(sessionID string) transcript.Topic {
 	topic.Name = r.names.of[sessionID]
 
 	return topic
+}
+
+// Shows reports whether a pane titled title can still hold the session topic
+// was read from; a title Codex was configured to set otherwise always can.
+func (r *Reader) Shows(title string, topic transcript.Topic) bool {
+	if len(r.roots) == 0 {
+		return true
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return r.title.customized() || shows(title, topic)
 }
 
 // Retain forgets every session but these, so a pane that closed takes its
