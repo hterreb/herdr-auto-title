@@ -21,7 +21,7 @@ func TestAHeadWithNoWholeLineIsSkippedForTheTail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	follower := transcript.Follower{Head: true}
+	follower := transcript.Follower{CatchUp: transcript.HeadAndTail}
 
 	var read []string
 

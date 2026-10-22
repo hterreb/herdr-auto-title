@@ -74,7 +74,7 @@ func (r *Reader) Topic(path string) Topic {
 
 	held, known := r.sessions[path]
 	if !known {
-		held = &session{follower: transcript.Follower{Head: true}}
+		held = &session{follower: transcript.Follower{CatchUp: transcript.HeadAndTail}}
 		r.sessions[path] = held
 	}
 

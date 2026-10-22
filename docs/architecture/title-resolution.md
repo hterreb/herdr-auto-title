@@ -214,7 +214,8 @@ from wherever it grows after that; the Claude reader reads the tail alone,
 because a title Claude Code has given a session is repeated there. Both follow
 their files through `internal/transcript.Follower`, which keeps the offset,
 starts over on a file that shrank and waits for a half-written last line; the
-head read is its `Head` option, so each package parses only its own lines.
+head read is its `HeadAndTail` catch-up, so each package parses only its own
+lines.
 
 Three costs are worth stating plainly:
 

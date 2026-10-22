@@ -14,12 +14,24 @@ import (
 // catch-up on a session first seen mid-flight, not the steady state.
 const MaxScan = 2 << 20
 
+// CatchUp is which part of a file first seen past MaxScan is read, which
+// depends on what the file says only once.
+type CatchUp int
+
+const (
+	// Tail reads the last MaxScan bytes alone, where a name the session was
+	// given is repeated.
+	Tail CatchUp = iota
+	// HeadAndTail reads the first MaxScan bytes too, for a file that says where
+	// the session started only up front.
+	HeadAndTail
+)
+
 // Follower reads one session file a poll at a time, from where the last read
-// stopped. Head makes the catch-up on a large file read its head as well as
-// its tail, for an agent that records where it started only once, up front.
+// stopped.
 type Follower struct {
-	Head   bool
-	offset int64
+	CatchUp CatchUp
+	offset  int64
 }
 
 // Follow hands absorb each complete line appended to the file at path since
@@ -51,9 +63,8 @@ func (f *Follower) Follow(path string, reset func(), absorb func(line string)) b
 	// A read-only file has nothing to report on close.
 	defer func() { _ = file.Close() }()
 
-	// A file first seen long after it started is caught up on from its tail,
-	// where a name it was given is repeated; what lies between says nothing.
-	if f.Head && f.offset == 0 && size > MaxScan {
+	// What lies between the head and the tail says nothing.
+	if f.CatchUp == HeadAndTail && f.offset == 0 && size > MaxScan {
 		next, err := readLines(file, 0, false, absorb)
 		if err != nil {
 			return true
