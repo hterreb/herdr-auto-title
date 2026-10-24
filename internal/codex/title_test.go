@@ -51,6 +51,10 @@ func TestATitleThatMovedOnShowsAnotherSession(t *testing.T) {
 		t.Error("a whole shorter name shows the longer session it starts")
 	}
 
+	if shows("Rework the poll loop so a pane that moved is ... | dashboard", named) {
+		t.Error("a cut name shows a session whose name starts differently")
+	}
+
 	if shows(
 		"Reply with ok | dashboard",
 		transcript.Topic{Opening: "reply with the single word ok"},

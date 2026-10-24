@@ -3,6 +3,7 @@ package codex
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -301,19 +302,20 @@ func TestARolloutWrittenAfterTheFirstReadIsSwitchedTo(t *testing.T) {
 	}
 }
 
-func TestAnIndexPastMaxScanKeepsItsOldestNames(t *testing.T) {
+func TestAnIndexPastMaxScanKeepsEveryName(t *testing.T) {
 	t.Parallel()
 
-	// Read from its tail, as a rollout is, an index that outgrew one read would
-	// lose every session named before the tail.
+	// Read from its ends alone, as a rollout is, an index that outgrew two reads
+	// would lose every session named between them.
 	h := newHome(t)
 	h.rollout(meta(started), prompt("rework the poll loop"))
 
-	lines := []string{named(session, "Rework poll loop")}
-	for filler := named(other, strings.Repeat("x", 1000)); len(lines)*len(filler) <= transcript.MaxScan; {
-		lines = append(lines, filler)
+	var filler []string
+	for line := named(other, strings.Repeat("x", 1000)); len(filler)*len(line) <= transcript.MaxScan; {
+		filler = append(filler, line)
 	}
 
+	lines := append(append(slices.Clone(filler), named(session, "Rework poll loop")), filler...)
 	h.index(lines...)
 
 	r := NewReader(h.dir)
@@ -322,7 +324,7 @@ func TestAnIndexPastMaxScanKeepsItsOldestNames(t *testing.T) {
 	}
 
 	if got := r.Topic(session).Text(); got != "Rework poll loop" {
-		t.Errorf("text = %q, want the name at the start of the index", got)
+		t.Errorf("text = %q, want the name in the middle of the index", got)
 	}
 }
 
