@@ -48,7 +48,9 @@ A tab holding several panes is named after one of them, never after a blend of
 both. `TabFrom` (`internal/state/tab.go`) picks it once, as `TabState.Context`,
 in order:
 
-1. the focused pane;
+1. the focused pane, or in a tab out of view the pane last focused there —
+   Herdr flags focus only in the tab a client is looking at, and a tab you
+   leave should keep the name it had while you were in it;
 2. failing that, a pane running an agent that is `working` or `blocked` — a
    split where the user left an agent running is about that agent, even though
    the pane below it saw the last update;

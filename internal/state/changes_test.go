@@ -118,3 +118,32 @@ func TestChangesAreSafeUnderConcurrentUse(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestATabYouLeaveKeepsItsLastFocusedPane(t *testing.T) {
+	t.Parallel()
+
+	focused := func(paneID, tabID string) herdr.PaneInfo {
+		return herdr.PaneInfo{PaneID: paneID, TabID: tabID, Focused: true}
+	}
+
+	c := NewChanges()
+	c.Observe([]herdr.PaneInfo{focused("wE:p1", "wE:t1"), pane("wE:p2", 1)})
+
+	// The focus moves to another tab: Herdr no longer flags any pane in t1.
+	c.Observe([]herdr.PaneInfo{pane("wE:p1", 0), pane("wE:p2", 1), focused("wE:p3", "wE:t2")})
+
+	if got := c.LastFocused("wE:t1"); got != "wE:p1" {
+		t.Errorf("t1 remembers %q, want wE:p1", got)
+	}
+
+	if got := c.LastFocused("wE:t2"); got != "wE:p3" {
+		t.Errorf("t2 remembers %q, want wE:p3", got)
+	}
+
+	// A closed pane is forgotten.
+	c.Observe([]herdr.PaneInfo{pane("wE:p2", 1), focused("wE:p3", "wE:t2")})
+
+	if got := c.LastFocused("wE:t1"); got != "" {
+		t.Errorf("t1 still remembers closed pane %q", got)
+	}
+}

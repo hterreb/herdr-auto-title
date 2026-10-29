@@ -1,6 +1,8 @@
 package app
 
 import (
+	"slices"
+
 	"github.com/kryptamine/herdr-auto-title/internal/herdr"
 	"github.com/kryptamine/herdr-auto-title/internal/state"
 )
@@ -28,6 +30,7 @@ func (a *App) tabsIn(snapshot herdr.Snapshot) []state.TabState {
 
 	for _, info := range snapshot.Tabs {
 		positions[info.WorkspaceID]++
+		stickFocus(byTab[info.TabID], a.changes.LastFocused(info.TabID))
 
 		tabs = append(
 			tabs,
@@ -42,6 +45,21 @@ func (a *App) tabsIn(snapshot herdr.Snapshot) []state.TabState {
 	}
 
 	return tabs
+}
+
+// stickFocus marks the pane last focused in a tab as focused again while the
+// focus is in another tab, so a tab you leave is not named after whichever of
+// its panes drew last, such as a sidebar.
+func stickFocus(panes []*state.PaneState, last string) {
+	if slices.ContainsFunc(panes, func(p *state.PaneState) bool { return p.Focused }) {
+		return
+	}
+
+	for _, p := range panes {
+		if p.ID == last {
+			p.Focused = true
+		}
+	}
 }
 
 // handlesIn maps each pane to the name its agent was given, leaving out the

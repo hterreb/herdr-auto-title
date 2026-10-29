@@ -397,7 +397,9 @@ reads, so this section describes Herdr rather than those types.
   worktree. `active_tab_id` is the tab the workspace shows: a second tab
   created with `--no-focus` left it on the first. `TabInfo.focused` is not that
   tab — it was false for both tabs of that workspace, since it marks only the
-  one tab a client is looking at.
+  one tab a client is looking at. `PaneInfo.focused` follows it: across a
+  session of five workspaces and eleven tabs, `pane.list` flagged one pane, in
+  the tab in view, and every other tab had none.
 - **`workspace.report_metadata` attaches display-only tokens to a workspace and
   never touches its label.** It takes `{workspace_id, source, tokens}` plus an
   optional `seq` and `ttl_ms`, with `tokens` a required map from name to a

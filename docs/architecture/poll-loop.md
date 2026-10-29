@@ -55,7 +55,7 @@ name is derived from the state read for that poll, which is what makes the
 resolver's determinism worth anything: identical session state always yields an
 identical title.
 
-Five things are carried between polls, and each exists because a snapshot
+Six things are carried between polls, and each exists because a snapshot
 cannot express it:
 
 - **When each pane last changed** (`internal/state/changes.go`). A snapshot says
@@ -64,6 +64,11 @@ cannot express it:
   are monotonic, so comparing one poll's revisions with the last says which panes
   moved. The map is rebuilt from each snapshot, so panes that closed disappear
   from it for free.
+- **Which pane was last focused in each tab** (`internal/state/changes.go`).
+  Herdr flags one focused pane in the whole session, the one in the tab a
+  client is looking at, so every tab out of view reports none. Without this, a
+  tab you leave would be renamed after whichever of its panes drew last. A
+  remembered pane that closed is forgotten with the change map.
 - **What each pane was running** (`internal/reads/processes.go`, which marks a
   read stale on the panes `Changes.Observe` reports as drawn, so the two cannot
   disagree on which panes moved). `PaneInfo` carries no process name, so naming a

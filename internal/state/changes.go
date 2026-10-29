@@ -13,6 +13,9 @@ import (
 type Changes struct {
 	mu    sync.Mutex
 	panes map[string]paneChange
+	// focus is the pane last seen focused in each tab. Herdr flags only the
+	// viewed tab's pane, so a tab you leave keeps the one you were in.
+	focus map[string]string
 	now   func() time.Time
 }
 
@@ -24,6 +27,7 @@ type paneChange struct {
 func NewChanges() *Changes {
 	return &Changes{
 		panes: make(map[string]paneChange),
+		focus: make(map[string]string),
 		now:   time.Now,
 	}
 }
@@ -55,7 +59,32 @@ func (c *Changes) Observe(panes []herdr.PaneInfo) map[string]bool {
 
 	c.panes = seen
 
+	focus := make(map[string]string, len(c.focus))
+
+	for tab, paneID := range c.focus {
+		if _, ok := seen[paneID]; ok {
+			focus[tab] = paneID
+		}
+	}
+
+	for _, pane := range panes {
+		if pane.Focused {
+			focus[pane.TabID] = pane.PaneID
+		}
+	}
+
+	c.focus = focus
+
 	return drew
+}
+
+// LastFocused reports the pane last seen focused in a tab, or "" for a tab no
+// poll has seen focused yet.
+func (c *Changes) LastFocused(tabID string) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.focus[tabID]
 }
 
 // ChangedAt reports when a pane was last seen to change, or the zero time for

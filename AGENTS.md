@@ -216,7 +216,8 @@ are only the facts that would otherwise mislead the code in silence.
   for good, and no call hands the label back to Herdr.
 - **A workspace's active tab is `active_tab_id`, not `TabInfo.focused`.**
   `focused` marks only the one tab a client is looking at, so every other
-  workspace's tabs all read `false`.
+  workspace's tabs all read `false`. `PaneInfo.focused` is the same: one pane
+  in the whole session, so `Changes` remembers each tab's last focused pane.
 - **`workspace.report_metadata` clears a token with `null`.** `tokens` is a
   required map of string or `null`; a string-only map cannot clear, and
   leaving the key out changes nothing. A token is keyed by its name alone:
